@@ -3,11 +3,17 @@ package ru.javawebinar.topjava.util;
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.model.UserMealWithExcess;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
+import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.ChronoLocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -34,6 +40,22 @@ public class UserMealsUtil {
 
     public static List<UserMealWithExcess> filteredByStreams(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
         // TODO Implement by streams
-        return null;
+        Map<LocalDate, List<UserMeal>> mapUserMeals = meals.stream().collect(
+                Collectors.groupingBy(meal -> meal.getDateTime().toLocalDate())
+        );
+        List<UserMealWithExcess> result= new ArrayList<>();
+        meals.forEach(meal -> {
+            if(meal.getDateTime().toLocalDate().isAfter(ChronoLocalDate.from(startTime)) &&
+                    meal.getDateTime().toLocalDate().isBefore(ChronoLocalDate.from(endTime))){
+
+                result.add(new UserMealWithExcess(meal.getDateTime(),
+                        meal.getDescription(),
+                        meal.getCalories(),
+                        mapUserMeals.get(meal.getDateTime().toLocalDate()).stream()
+                                .collect(Collectors.summarizingInt(UserMeal::getCalories)).getSum()
+                                > caloriesPerDay));
+            }
+        });
+        return result;
     }
 }
